@@ -28,6 +28,7 @@ dependencies:
 - microlens 
 - monad-logger
 - monad-metrics > 0.2.0
+- mtl
 - persistent 
 - persistent-template
 - persistent-mysql-haskell
@@ -62,6 +63,7 @@ default-extensions:
 - StandaloneDeriving
 - TypeFamilies
 - DataKinds
+- GeneralizedNewtypeDeriving
 
 library:
   source-dirs: src

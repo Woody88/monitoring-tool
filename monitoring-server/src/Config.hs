@@ -1,8 +1,7 @@
 module Config where
 
 import           Control.Concurrent                   (ThreadId)
-import           Control.Monad.Metrics                (Metrics, MonadMetrics,
-                                                       getMetrics)
+import           Control.Monad.Metrics                (Metrics)
 import qualified Katip
 import           Network.Wai                          as Wai
 import           Network.Wai.Handler.Warp             as Warp

@@ -20,9 +20,9 @@ import           System.Remote.Monitoring as SRM
 -- | An action that creates a WAI 'Application' together with its resources,
 --   runs it, and tears it down on exit
 runApp :: IO ()
-runApp = Exception.bracket acquireConfig shutdownApp runApp
+runApp = Exception.bracket getAppSettings cleamAppResources runApp'
   where
-    runApp config = Warp.run (configPort config) =<< initialize config
+    runApp' config = Warp.run (configPort config) =<< initialize config
 
 -- | The 'initialize' function accepts the required environment information,
 -- initializes the WAI 'Application' and returns it
@@ -33,14 +33,14 @@ initialize cfg = do
     pure . logger . metrics waiMetrics $ app
 
 -- | Allocates resources for 'Config'
-acquireConfig :: IO Config
-acquireConfig = do
+getAppSettings :: IO Config
+getAppSettings = do
     port <- lookupSetting "PORT" 8081
     env  <- lookupSetting "ENV" Development
     logEnv <- Logger.defaultLogEnv
     ekgServer <- SRM.forkServer "localhost" 8000
     let store = SRM.serverMetricStore ekgServer
-    waiMetrics <- WaiMetrics.registerWaiMetrics store
+    _ <- WaiMetrics.registerWaiMetrics store
     metr <- Metrics.initializeWith store
     pure Config
         { configEnv = env
@@ -51,9 +51,9 @@ acquireConfig = do
         }
 
 -- | Takes care of cleaning up 'Config' resources
-shutdownApp :: Config -> IO ()
-shutdownApp cfg = do
-    Katip.closeScribes (configLogEnv cfg)
+cleamAppResources :: Config -> IO ()
+cleamAppResources cfg = do
+    _ <- Katip.closeScribes (configLogEnv cfg)
     -- Monad.Metrics does not provide a function to destroy metrics store
     -- so, it'll hopefully get torn down when async exception gets thrown
     -- at metrics server process

@@ -22,9 +22,23 @@ description:         Please see the README on Github at <https://github.com/gith
 dependencies:
 - base >= 4.11 && < 10
 - rio >= 0.1.8.0
+- aeson 
+- ekg
+- katip
+- microlens 
+- monad-logger
+- monad-metrics > 0.2.0
 - persistent 
 - persistent-template
 - persistent-mysql-haskell
+- safe
+- servant 
+- servant-server
+- wai
+- wai-cors 
+- wai-extra
+- wai-middleware-metrics
+- warp
 
 ghc-options:
 - -Wall
@@ -47,6 +61,7 @@ default-extensions:
 - ScopedTypeVariables
 - StandaloneDeriving
 - TypeFamilies
+- DataKinds
 
 library:
   source-dirs: src

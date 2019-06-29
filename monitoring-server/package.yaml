@@ -24,6 +24,7 @@ dependencies:
 - rio >= 0.1.8.0
 - aeson 
 - ekg
+- fast-logger
 - katip
 - microlens 
 - monad-logger

@@ -12,11 +12,11 @@ import           RIO
 -- running in and a Persistent 'ConnectionPool'.
 data Config =
   Config
-    { configEnv       :: Environment
-    , configMetrics   :: Metrics
-    , configEkgServer :: ThreadId
-    , configLogEnv    :: Katip.LogEnv
-    , configPort      :: Warp.Port
+    { configEnv       :: !Environment
+    , configMetrics   :: !Metrics
+    , configEkgServer :: !ThreadId
+    , configLogEnv    :: !Katip.LogEnv
+    , configPort      :: !Warp.Port
     }
 
 data Environment

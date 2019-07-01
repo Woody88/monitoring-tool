@@ -36,6 +36,7 @@ dependencies:
 - safe
 - servant 
 - servant-server
+- text
 - wai
 - wai-cors 
 - wai-extra

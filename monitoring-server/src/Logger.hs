@@ -24,7 +24,7 @@ fromLevel Logger.LevelError     = ErrorS
 fromLevel (Logger.LevelOther _) = NoticeS
 
 -- | Transforms Katip logMsg into monadLoggerLog to be used inside
--- MonadLogger monad
+-- MonadLogger monadnt
 liftKatip :: (ToLogStr msg)  =>
          (Katip.Namespace -> Severity -> Katip.LogStr -> m ()) ->
           Logger.Loc -> Logger.LogSource -> Logger.LogLevel -> msg -> m ()

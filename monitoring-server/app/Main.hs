@@ -1,7 +1,7 @@
 module Main (main) where
 
+import           Application (runApp)
 import           RIO
-import           RIO.ByteString.Lazy as BL
 
 main :: IO ()
-main = BL.putStrLn "Main not implemented"
+main = runApp

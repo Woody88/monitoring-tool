@@ -6,6 +6,7 @@ import           Config                   (Config (..), Environment (..),
 import           Control.Concurrent       (killThread)
 import           Control.Exception        as Exception
 import qualified Control.Monad.Metrics    as Metrics
+import           Data.Text.IO             as TIO
 import           Katip
 import           Lens.Micro               ((^.))
 import           Logger
@@ -28,6 +29,7 @@ runApp = Exception.bracket getAppSettings cleamAppResources runApp'
 -- initializes the WAI 'Application' and returns it
 initialize :: Config -> IO Application
 initialize cfg = do
+    TIO.putStrLn $ "Running on port: " <> (tshow . configPort $ cfg)
     waiMetrics <- registerWaiMetrics (configMetrics cfg ^. Metrics.metricsStore)
     let logger = Config.setLogger (configEnv cfg)
     pure . logger . metrics waiMetrics $ app

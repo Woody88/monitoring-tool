@@ -23,8 +23,10 @@ dependencies:
 - base >= 4.11 && < 10
 - rio >= 0.1.8.0
 - aeson 
+- binary
 - ekg
 - fast-logger
+- http-types
 - katip
 - microlens 
 - monad-logger

@@ -1,6 +1,6 @@
 module Application where
 
-import           API                      (app)
+import           API                      (app, createUserChannel)
 import           Config                   (Config (..), Environment (..),
                                            setLogger)
 import           Control.Concurrent       (killThread)
@@ -21,7 +21,7 @@ import           System.Remote.Monitoring as SRM
 -- | An action that creates a WAI 'Application' together with its resources,
 --   runs it, and tears it down on exit
 runApp :: IO ()
-runApp = Exception.bracket getAppSettings cleamAppResources runApp'
+runApp = Exception.bracket getAppSettings cleanAppResources runApp'
   where
     runApp' config = Warp.run (configPort config) =<< initialize config
 
@@ -32,7 +32,7 @@ initialize cfg = do
     TIO.putStrLn $ "Running on port: " <> (tshow . configPort $ cfg)
     waiMetrics <- registerWaiMetrics (configMetrics cfg ^. Metrics.metricsStore)
     let logger = Config.setLogger (configEnv cfg)
-    pure . logger . metrics waiMetrics $ app
+    logger . metrics waiMetrics . app <$> createUserChannel
 
 -- | Allocates resources for 'Config'
 getAppSettings :: IO Config
@@ -53,8 +53,8 @@ getAppSettings = do
         }
 
 -- | Takes care of cleaning up 'Config' resources
-cleamAppResources :: Config -> IO ()
-cleamAppResources cfg = do
+cleanAppResources :: Config -> IO ()
+cleanAppResources cfg = do
     _ <- Katip.closeScribes (configLogEnv cfg)
     -- Monad.Metrics does not provide a function to destroy metrics store
     -- so, it'll hopefully get torn down when async exception gets thrown

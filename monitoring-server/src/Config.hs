@@ -2,6 +2,7 @@ module Config where
 
 import           Control.Concurrent                   (ThreadId)
 import           Control.Monad.Metrics                (Metrics)
+import qualified Database.MySQL.Base                  as MySQL
 import qualified Katip
 import           Network.Wai                          as Wai
 import           Network.Wai.Handler.Warp             as Warp
@@ -12,11 +13,12 @@ import           RIO
 -- running in and a Persistent 'ConnectionPool'.
 data Config =
   Config
-    { configEnv       :: !Environment
-    , configMetrics   :: !Metrics
-    , configEkgServer :: !ThreadId
-    , configLogEnv    :: !Katip.LogEnv
-    , configPort      :: !Warp.Port
+    { configBinLogConn :: !MySQL.MySQLConn
+    , configEnv        :: !Environment
+    , configMetrics    :: !Metrics
+    , configEkgServer  :: !ThreadId
+    , configLogEnv     :: !Katip.LogEnv
+    , configPort       :: !Warp.Port
     }
 
 data Environment

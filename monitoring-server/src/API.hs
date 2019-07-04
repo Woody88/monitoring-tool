@@ -33,9 +33,9 @@ data User = User
 
 $(deriveJSON defaultOptions ''User)
 
-type API =  "users" :> Get '[JSON] [User]
-       :<|> "users" :> PostNoContent '[JSON] NoContent
-       :<|> "channel" :> "users" :> Raw
+type API =  "users" :> Get '[JSON] [User]               -- GET /users it return a json array of user
+       :<|> "users" :> PostNoContent '[JSON] NoContent  -- POST /users it does not take any request body and it does not return anything
+       :<|> "channel" :> "users" :> Raw                 -- GET /channel/users the server sent event stream it keeps the connection open
 
 startApp :: IO ()
 startApp = createUserChannel >>= run 8081 . app
@@ -64,7 +64,7 @@ usersChan em = Tagged $ \req resp -> do
       Just (EM.Channel chan) -> do
         _ <- async $ forever $ do                 -- running a process that forever listen to events from broadcast channel
           msg <- atomically $ readTChan chan      -- when an event is captured wrap it in an server sent event type
-          writeChan sseChan (toUserSSE msg)       -- and push the event to the server semt channel
+          writeChan sseChan (toUserSSE msg)       -- and push the event to the server sent channel
         eventSourceAppChan sseChan req resp       -- Maybe this logic should be generalized?
       Nothing   -> do
         resp $ responseLBS status404 [] "Cannot find channel"

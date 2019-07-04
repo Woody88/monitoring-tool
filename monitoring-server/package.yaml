@@ -27,11 +27,13 @@ dependencies:
 - ekg
 - fast-logger
 - http-types
+- io-streams
 - katip
 - microlens 
 - monad-logger
 - monad-metrics > 0.2.0
 - mtl
+- mysql-haskell
 - persistent 
 - persistent-template
 - persistent-mysql-haskell

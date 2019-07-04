@@ -4,6 +4,7 @@ module EventManager
     , Message
     , newEventManager
     , newEventManagerWith
+    , newTopic
     , eventWrite
     , eventSubscribe
     )
@@ -29,6 +30,9 @@ newEventManagerWith = foldM (\em topic -> newChannel >>= (\chan -> pure $ addCha
 
 newChannel :: IO Channel
 newChannel =  Channel <$> newTChanIO
+
+newTopic :: Topic -> EventManager -> IO EventManager
+newTopic topic em = (\chan -> addChannel topic chan em) <$> newChannel
 
 getChannel :: Topic -> EventManager -> Maybe Channel
 getChannel topic (EventManager em) = HM.lookup topic em

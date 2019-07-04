@@ -7,6 +7,7 @@ import           Control.Concurrent       (killThread)
 import           Control.Exception        as Exception
 import qualified Control.Monad.Metrics    as Metrics
 import           Data.Text.IO             as TIO
+import           Database
 import           Katip
 import           Lens.Micro               ((^.))
 import           Logger
@@ -14,9 +15,8 @@ import           Network.Wai              (Application)
 import           Network.Wai.Handler.Warp as Warp
 import           Network.Wai.Metrics      as WaiMetrics
 import           RIO
-import           Safe                     (readMay)
-import           System.Environment       (lookupEnv)
 import           System.Remote.Monitoring as SRM
+import           Util
 
 -- | An action that creates a WAI 'Application' together with its resources,
 --   runs it, and tears it down on exit
@@ -29,23 +29,27 @@ runApp = Exception.bracket getAppSettings cleanAppResources runApp'
 -- initializes the WAI 'Application' and returns it
 initialize :: Config -> IO Application
 initialize cfg = do
-    TIO.putStrLn $ "Running on port: " <> (tshow . configPort $ cfg)
+    em <- createUserChannel
+    binlogThread <- Database.startBinlogListener (configBinLogConn cfg) em
     waiMetrics <- registerWaiMetrics (configMetrics cfg ^. Metrics.metricsStore)
     let logger = Config.setLogger (configEnv cfg)
-    logger . metrics waiMetrics . app <$> createUserChannel
+    TIO.putStrLn $ "Running on port: " <> (tshow . configPort $ cfg)
+    return . logger . metrics waiMetrics $ app em
 
 -- | Allocates resources for 'Config'
 getAppSettings :: IO Config
 getAppSettings = do
-    port <- lookupSetting "PORT" 8081
-    env  <- lookupSetting "ENV" Development
-    logEnv <- Logger.defaultLogEnv
-    ekgServer <- SRM.forkServer "localhost" 8000
+    port                <- Util.lookupSetting "PORT" 8081
+    env                 <- Util.lookupSetting "ENV" Development
+    logEnv              <- Logger.defaultLogEnv
+    ekgServer           <- SRM.forkServer "localhost" 8000
+    (_, binlogConn) <- Database.getMySQLConn env
     let store = SRM.serverMetricStore ekgServer
     _ <- WaiMetrics.registerWaiMetrics store
     metr <- Metrics.initializeWith store
     pure Config
-        { configEnv = env
+        { configBinLogConn = binlogConn
+        , configEnv = env
         , configMetrics = metr
         , configLogEnv = logEnv
         , configPort = port
@@ -55,22 +59,13 @@ getAppSettings = do
 -- | Takes care of cleaning up 'Config' resources
 cleanAppResources :: Config -> IO ()
 cleanAppResources cfg = do
+    putStrLn "Cleanning ressources..."
     _ <- Katip.closeScribes (configLogEnv cfg)
+    _ <- Database.close (configBinLogConn cfg)  -- close database binlog connection
     -- Monad.Metrics does not provide a function to destroy metrics store
     -- so, it'll hopefully get torn down when async exception gets thrown
     -- at metrics server process
     killThread (configEkgServer cfg)
+    putStrLn "Cleanning done..."
     pure ()
 
--- | Looks up a setting in the environment, with a provided default, and
--- 'read's that information into the inferred type.
-lookupSetting :: Read a => String -> a -> IO a
-lookupSetting env def = do
-  maybeValue <- lookupEnv env
-  case maybeValue of
-    Nothing  -> return def
-    Just str -> maybe (handleFailedRead str) return (readMay str)
-  where
-    handleFailedRead str =
-      error $
-      mconcat ["Failed to read [[", str, "]] for environment variable ", env]

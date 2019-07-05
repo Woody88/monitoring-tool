@@ -30,7 +30,7 @@ runApp = Exception.bracket getAppSettings cleanAppResources runApp'
 initialize :: Config -> IO Application
 initialize cfg = do
     em <- createUserChannel
-    binlogThread <- Database.startBinlogListener (configBinLogConn cfg) em
+    _ <- Database.startBinlogListener (configBinLogConn cfg) em   -- get binlog thread
     waiMetrics <- registerWaiMetrics (configMetrics cfg ^. Metrics.metricsStore)
     let logger = Config.setLogger (configEnv cfg)
     TIO.putStrLn $ "Running on port: " <> (tshow . configPort $ cfg)
@@ -43,7 +43,7 @@ getAppSettings = do
     env                 <- Util.lookupSetting "ENV" Development
     logEnv              <- Logger.defaultLogEnv
     ekgServer           <- SRM.forkServer "localhost" 8000
-    (_, binlogConn) <- Database.getMySQLConn env
+    (_, binlogConn)     <- Database.getMySQLConn env
     let store = SRM.serverMetricStore ekgServer
     _ <- WaiMetrics.registerWaiMetrics store
     metr <- Metrics.initializeWith store
@@ -61,7 +61,7 @@ cleanAppResources :: Config -> IO ()
 cleanAppResources cfg = do
     putStrLn "Cleanning ressources..."
     _ <- Katip.closeScribes (configLogEnv cfg)
-    _ <- Database.close (configBinLogConn cfg)  -- close database binlog connection
+    --_ <- Database.close (configBinLogConn cfg)  -- close database binlog connection, it hangs the thread when I run it
     -- Monad.Metrics does not provide a function to destroy metrics store
     -- so, it'll hopefully get torn down when async exception gets thrown
     -- at metrics server process
